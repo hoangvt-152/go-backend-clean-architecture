@@ -1,48 +1,37 @@
 package bootstrap
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/mongo"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func NewMongoDatabase(env *Env) mongo.Client {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func NewDatabase(env *Env) *gorm.DB {
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
 
 	dbHost := env.DBHost
 	dbPort := env.DBPort
 	dbUser := env.DBUser
 	dbPass := env.DBPass
+	dbName := env.DBName
 
-	mongodbURI := fmt.Sprintf("mongodb://%s:%s@%s:%s", dbUser, dbPass, dbHost, dbPort)
+	var err error
+	var DB *gorm.DB
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai", dbHost, dbUser, dbPass, dbName, dbPort)
 
-	if dbUser == "" || dbPass == "" {
-		mongodbURI = fmt.Sprintf("mongodb://%s:%s", dbHost, dbPort)
-	}
-
-	client, err := mongo.NewClient(mongodbURI)
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to the Database")
 	}
-
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = client.Ping(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return client
+	fmt.Println("🚀 Connected Successfully to the Database")
+	return DB
 }
 
-func CloseMongoDBConnection(client mongo.Client) {
+/**
+func CloseDBConnection(client mongo.Client) {
 	if client == nil {
 		return
 	}
@@ -54,3 +43,4 @@ func CloseMongoDBConnection(client mongo.Client) {
 
 	log.Println("Connection to MongoDB closed.")
 }
+**/
